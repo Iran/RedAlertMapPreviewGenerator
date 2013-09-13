@@ -11,7 +11,9 @@ namespace RedAlertMapPreviewGenerator
     {
         IniFile MapINI;
         CellStruct[,] Cells = new CellStruct[128,128];
+        Color Transparent = new Color();
         int MapWidth = -1, MapHeight = -1, MapY = -1, MapX = -1;
+        Dictionary<int, Template> TemplatesDict = new Dictionary<int,Template>();
 
         public MapPreviewGenerator(string FileName)
         {
@@ -24,6 +26,8 @@ namespace RedAlertMapPreviewGenerator
 
             CellStruct[] Raw = new CellStruct[16384];
             MemoryStream ms = Get_Packed_Section("MapPack");
+
+            Init_Templates();
 
            /* using (FileStream file = new FileStream("file.bin", FileMode.Create, System.IO.FileAccess.Write))
             {
@@ -122,80 +126,98 @@ namespace RedAlertMapPreviewGenerator
             return false;
         }
 
+        Color Color_From_TerrainType(TerrainType type)
+        {
+            switch (type)
+            {
+                case TerrainType.Clear: return Color.FromArgb(40, 68, 40);
+                case TerrainType.Water: return Color.FromArgb(92, 116, 164);
+                case TerrainType.Road: return Color.FromArgb(88, 116, 116);
+                case TerrainType.Rock: return Color.FromArgb(68, 68, 60);
+                case TerrainType.Tree: return Color.FromArgb(28, 32, 36);
+                case TerrainType.River: return Color.FromArgb(92, 140, 180);
+                case TerrainType.Rough: return Color.FromArgb(68, 68, 60);
+                case TerrainType.Wall: return Color.FromArgb(208, 192, 160);
+                case TerrainType.Beach: return Color.FromArgb(176, 156, 120);
+                case TerrainType.Ore: return Color.FromArgb(200, 200, 0);
+                case TerrainType.Gems: return Color.FromArgb(200, 0, 200);
+
+                default: return Transparent;
+            }
+        }
+
         public Bitmap Get_Bitmap()
         {
-            Color Transparent = new Color();
             Bitmap bitMap = new Bitmap(128, 128);
             bitMap.MakeTransparent(Transparent);
 
 
-            for (int y = 0; y < 128; y++) 
+            for (int y = 0; y < 128; y++)
             {
-                for (int x = 0; x < 128; x++) 
+                for (int x = 0; x < 128; x++)
                 {
                     Color color = new Color();
                     color = Color.Green;
 
-                    CellStruct data = Cells[x,y];
-                    int terrain = 0;
+                    CellStruct data = Cells[x, y];
+//                    int terrain = 0;
 
-//            $template = $tileset->getTemplate($data['template']);
-//            if (!$template) {
- //               $template = $tileset->getTemplate(255);
-//            }
-//            $terrain = $tileset->getTerrain($template['Tiles'][$data['tile']]);
+                    color = Color_From_TerrainType(TerrainType_From_Template(data.Template, data.Tile));
 
- //           if (data.Terrain != null) {
- //               $terrain = $tileset->getTerrain('Tree');
- //           } 
-            if (data.Waypoint != 0 && data.Waypoint < 10) 
-            {
-                Console.WriteLine("Map[{0},{1}] waypoint = {2} = {3}", x, y, data.Waypoint, (y * 128) + x);
-                color = Color.Red;
-            } 
-            else if (data.Overlay != 255) 
-            {
-//                Console.WriteLine("Overlay = {0}", data.Overlay);
+                    if (data.Terrain != null)
+                    {
+//                        Console.WriteLine("Terrain string != null");
+                        color = Color_From_TerrainType(TerrainType.Tree);
+                    }          
+                        else if (data.Waypoint != 0 && data.Waypoint < 10)
+                        {
+//                            Console.WriteLine("Map[{0},{1}] waypoint = {2} = {3}", x, y, data.Waypoint, (y * 128) + x);
+                            color = Color.Red;
+                        }
+                        else if (data.Overlay != 255)
+                        {
+                            //                Console.WriteLine("Overlay = {0}", data.Overlay);
 
-                switch (data.Overlay) 
-                {
-                    case 0x05:
-                    case 0x06:
-                    case 0x07:
-                    case 0x08:
-//                        Console.WriteLine("Ore");
-                        color = Color.Yellow;
-//                        $terrain = $tileset->getTerrain('Ore');
-                        break;
-                    case 0x09:
-                    case 0x0A:
-                    case 0x0B:
-                    case 0x0C:
-//                        Console.WriteLine("Gem");
-                        color = Color.Pink;
-//                        $terrain = $tileset->getTerrain('Gems');
-                        break;
-                    default:
-                        break;
+                            switch (data.Overlay)
+                            {
+                                case 0x05:
+                                case 0x06:
+                                case 0x07:
+                                case 0x08:
+                                    //                        Console.WriteLine("Ore");
+                                    color = Color_From_TerrainType(TerrainType.Ore);
+                                    //                        $terrain = $tileset->getTerrain('Ore');
+                                    break;
+                                case 0x09:
+                                case 0x0A:
+                                case 0x0B:
+                                case 0x0C:
+                                    //                        Console.WriteLine("Gem");
+                                    color = Color_From_TerrainType(TerrainType.Gems);
+                                    //                        $terrain = $tileset->getTerrain('Gems');
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+
+                        /*    if (isset($colors[$terrain['Color']])) {
+                                $color = $colors[$terrain['Color']];
+                            } else {
+                                list($r,$g,$b) = explode(',', $terrain['Color']);
+                                $color = imagecolorallocate($im, (int)$r, (int)$g, (int)$b);
+                                $colors[$terrain['Color']] = $color;
+                            } */
+
+                        // add out-of-boundaries check to set transparent background
+                        if (Is_Out_Of_Bounds(x, y))
+                        {
+                            color = Transparent;
+                        }
+
+                        bitMap.SetPixel(x, y, color);
+                    }
                 }
-            }
-
-        /*    if (isset($colors[$terrain['Color']])) {
-                $color = $colors[$terrain['Color']];
-            } else {
-                list($r,$g,$b) = explode(',', $terrain['Color']);
-                $color = imagecolorallocate($im, (int)$r, (int)$g, (int)$b);
-                $colors[$terrain['Color']] = $color;
-            } */
-
-            // add out-of-boundaries check to set transparent background
-            if (Is_Out_Of_Bounds(x, y) && color == Color.Red) {
-                color = Transparent;
-            }
-
-            bitMap.SetPixel(x, y, color);
-        }
-    }
 
 
             return bitMap;
@@ -244,6 +266,71 @@ namespace RedAlertMapPreviewGenerator
             ms.Position = 0;
 
             return ms;
+        }
+
+        TerrainType TerrainType_From_Template(int Template, int Tile)
+        {
+            TerrainType terrainType = TerrainType.Clear;
+
+            if (TemplatesDict.ContainsKey(Template))
+            {
+                Template temp;
+                TemplatesDict.TryGetValue(Template, out temp);
+                return temp.T[Tile];
+            }
+/*
+            if (Template > 2 && Template < 57) return TerrainType.Beach;
+            if (Template > 134 && Template < 173) return TerrainType.Rock;
+            if (Template > 56 && Template < 97) return TerrainType.Rock;
+            if (Template > 172 && Template < 229) return TerrainType.Road;
+            if (Template > 230 && Template < 235) return TerrainType.Rock;
+            if (Template > 111 && Template < 125) return TerrainType.River;
+
+            switch (Template)
+            {
+                case 65535: case 255: return TerrainType.Clear;
+
+                case 1: case 2: return TerrainType.Water;
+
+                case 57: case 58: return TerrainType.Rock;
+
+                case 229: case 230: return TerrainType.River;
+
+                case 235: return TerrainType.Road;
+
+
+            } */
+
+            return terrainType;
+        }
+
+        void Init_Templates()
+        {
+            Template temp255 = new Template(); temp255.Set_Clear(); TemplatesDict.Add(255, temp255);
+            Template temp65535 = new Template(); temp65535.Set_Clear(); TemplatesDict.Add(65535, temp65535);
+            Template temp3 = new Template(); 
+            temp3.T[3] = TerrainType.Rock;
+            temp3.T[5] = TerrainType.Clear;
+            temp3.T[6] = TerrainType.Clear;
+            temp3.T[7] = TerrainType.Beach;
+            temp3.T[8] = TerrainType.Beach;
+            temp3.T[9] = TerrainType.Water;
+            temp3.T[10] = TerrainType.Water;
+            temp3.T[11] = TerrainType.River;
+            temp3.T[12] = TerrainType.Water;
+            temp3.T[13] = TerrainType.Water;
+            temp3.T[16] = TerrainType.Water;
+            TemplatesDict.Add(3, temp3);
+            Template temp4 = new Template();
+            temp4.Set_Type(TerrainType.Beach);
+            temp4.T[4] = TerrainType.Clear;
+            temp4.T[11] = TerrainType.Clear;
+            temp4.Set(16, TerrainType.Rough);
+            temp4.Set(17, TerrainType.Rough);
+            temp4.Set(18, TerrainType.River);
+            temp4.Set(20, TerrainType.Water);
+            temp4.Set(21, TerrainType.Water);
+            temp4.Set(22, TerrainType.Rock);
         }
     }
 
@@ -389,5 +476,42 @@ namespace RedAlertMapPreviewGenerator
         public int Overlay;
         public string Terrain;
         public int Waypoint;
+    }
+    enum TerrainType
+    {
+        Clear = 0,
+        Water,
+        Road,
+        Rock,
+        Tree,
+        River,
+        Rough,
+        Wall,
+        Beach,
+        Ore,
+        Gems,
+    }
+    class Template
+    {
+        public TerrainType[] T = new TerrainType[40]; // T = Tiles
+
+        public void Set_Clear()
+        {
+            for (int i = 0; i < T.Length; i++)
+            {
+                T[i] = TerrainType.Clear;
+            }
+        }
+        public void Set_Type(TerrainType type)
+        {
+            for (int i = 0; i < T.Length; i++)
+            {
+                T[i] = type;
+            }
+        }
+        public void Set(int Index, TerrainType type)
+        {
+            T[Index] = type;
+        }
     }
 }
