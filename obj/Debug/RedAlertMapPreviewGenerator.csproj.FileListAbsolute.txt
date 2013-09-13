@@ -1,0 +1,7 @@
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\RedAlertMapPreviewGenerator\bin\Debug\RedAlertMapPreviewGenerator.exe.config
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\bin\Debug\RedAlertMapPreviewGenerator.exe.config
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Debug\RedAlertMapPreviewGenerator.csprojResolveAssemblyReference.cache
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\bin\Debug\RedAlertMapPreviewGenerator.exe
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\bin\Debug\RedAlertMapPreviewGenerator.pdb
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Debug\RedAlertMapPreviewGenerator.exe
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Debug\RedAlertMapPreviewGenerator.pdb
