@@ -22,8 +22,14 @@ namespace RedAlertMapPreviewGenerator
 
         static public void Load()
         {
-//            SpwanLocationBitmaps[0] = RedAlertMapPreviewGenerator.Properties.Resources._1;
+            SpawnLocationBitmaps[0] = RedAlertMapPreviewGenerator.Properties.Resources._1;
             SpawnLocationBitmaps[1] = RedAlertMapPreviewGenerator.Properties.Resources._2;
+            SpawnLocationBitmaps[2] = RedAlertMapPreviewGenerator.Properties.Resources._3;
+            SpawnLocationBitmaps[3] = RedAlertMapPreviewGenerator.Properties.Resources._4;
+            SpawnLocationBitmaps[4] = RedAlertMapPreviewGenerator.Properties.Resources._5;
+            SpawnLocationBitmaps[5] = RedAlertMapPreviewGenerator.Properties.Resources._6;
+            SpawnLocationBitmaps[6] = RedAlertMapPreviewGenerator.Properties.Resources._7;
+            SpawnLocationBitmaps[7] = RedAlertMapPreviewGenerator.Properties.Resources._8;
         }
 
         public MapPreviewGenerator(string FileName)
@@ -42,16 +48,6 @@ namespace RedAlertMapPreviewGenerator
 
             CellStruct[] Raw = new CellStruct[16384];
             MemoryStream ms = Get_Packed_Section("MapPack");
-
-            Init_Templates();
-
-           /* using (FileStream file = new FileStream("file.bin", FileMode.Create, System.IO.FileAccess.Write))
-            {
-                byte[] bytes = new byte[ms.Length];
-                ms.Read(bytes, 0, (int)ms.Length);
-                file.Write(bytes, 0, bytes.Length);
-                ms.Close();
-            } */
 
             var ByteReader = new FastByteReader(ms.GetBuffer());
 
@@ -134,7 +130,8 @@ namespace RedAlertMapPreviewGenerator
                     int WayPoint = Raw[Index].Waypoint-1;
                     if (WayPoint >= 0 && WayPoint <= 8)
                     {
-                        Console.WriteLine("Waypoint found! ID = {0}, Raw = {1}", WayPoint, Index);
+//                        Console.WriteLine("Waypoint found! ID = {0}, Raw = {1}", WayPoint, Index);
+
                         Waypoints[WayPoint].WasFound = true;
                         Waypoints[WayPoint].X = x;
                         Waypoints[WayPoint].Y = y;
@@ -195,66 +192,44 @@ namespace RedAlertMapPreviewGenerator
                     color = Color.Transparent;
 
                     CellStruct data = Cells[x, y];
-//                    int terrain = 0;
 
                     TerrainType terrainType = TerrainType_From_Template(data.Template, data.Tile);
-
                     color = Color_From_TerrainType(terrainType);
 
                     if (data.Terrain != null)
                     {
-//                        Console.WriteLine("Terrain string != null");
                         color = Color_From_TerrainType(TerrainType.Tree);
                     }          
-                        else if (data.Waypoint != 0 && data.Waypoint < 10)
+
+                    else if (data.Overlay != 255)
+                    {
+                        switch (data.Overlay)
                         {
-                            Console.WriteLine("Map[{0},{1}] waypoint = {2} = {3}", x, y, data.Waypoint, (y * 128) + x);
-                            color = Color.Red;
+                            case 0x05:
+                            case 0x06:
+                            case 0x07:
+                            case 0x08:
+                                color = Color_From_TerrainType(TerrainType.Ore);
+                                break;
+                            case 0x09:
+                            case 0x0A:
+                            case 0x0B:
+                            case 0x0C:
+                                color = Color_From_TerrainType(TerrainType.Gems);
+                                break;
+                            default:
+                                break;
                         }
-                        else if (data.Overlay != 255)
-                        {
-                            //                Console.WriteLine("Overlay = {0}", data.Overlay);
-
-                            switch (data.Overlay)
-                            {
-                                case 0x05:
-                                case 0x06:
-                                case 0x07:
-                                case 0x08:
-                                    //                        Console.WriteLine("Ore");
-                                    color = Color_From_TerrainType(TerrainType.Ore);
-                                    //                        $terrain = $tileset->getTerrain('Ore');
-                                    break;
-                                case 0x09:
-                                case 0x0A:
-                                case 0x0B:
-                                case 0x0C:
-                                    //                        Console.WriteLine("Gem");
-                                    color = Color_From_TerrainType(TerrainType.Gems);
-                                    //                        $terrain = $tileset->getTerrain('Gems');
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-
-                        /*    if (isset($colors[$terrain['Color']])) {
-                                $color = $colors[$terrain['Color']];
-                            } else {
-                                list($r,$g,$b) = explode(',', $terrain['Color']);
-                                $color = imagecolorallocate($im, (int)$r, (int)$g, (int)$b);
-                                $colors[$terrain['Color']] = $color;
-                            } */
-
-                        // add out-of-boundaries check to set transparent background
-                        if (Is_Out_Of_Bounds(x, y))
-                        {
-                            color = Transparent;
-                        }
-
-                        bitMap.SetPixel(x, y, color);
                     }
+
+                    if (Is_Out_Of_Bounds(x, y))
+                    {
+                        color = Transparent;
+                    }
+
+                    bitMap.SetPixel(x, y, color);
                 }
+            }
 
             Graphics g = Graphics.FromImage(bitMap);
 
@@ -266,7 +241,7 @@ namespace RedAlertMapPreviewGenerator
 
         void Draw_Spawn_Locations(ref Graphics g)
         {
-            for (int i = 1; i < 8; i++)
+            for (int i = 1; i < 9; i++)
             {
                 Draw_Spawn_Location(ref g, i);
             }
@@ -283,7 +258,7 @@ namespace RedAlertMapPreviewGenerator
             var Spawn = SpawnLocationBitmaps[SpawnNumber - 1];
             int SpawnX = Spawn.Height / 2;
             int SpawnY = Spawn.Width / 2;
-            g.DrawImage(Spawn, Waypoint.Y - SpawnX , Waypoint.X  - SpawnY, Spawn.Width, Spawn.Height);
+            g.DrawImage(Spawn, Waypoint.Y - SpawnY , Waypoint.X  - SpawnX, Spawn.Width, Spawn.Height);
 
             g.Flush();
         }
@@ -361,35 +336,6 @@ namespace RedAlertMapPreviewGenerator
                 case "Gems": return TerrainType.Gems;
                 default: return TerrainType.Clear;
             }
-        }
-
-        void Init_Templates()
-        {
-            Template temp255 = new Template(); temp255.Set_Clear(); TemplatesDict.Add(255, temp255);
-            Template temp65535 = new Template(); temp65535.Set_Clear(); TemplatesDict.Add(65535, temp65535);
-            Template temp3 = new Template(); 
-            temp3.T[3] = TerrainType.Rock;
-            temp3.T[5] = TerrainType.Clear;
-            temp3.T[6] = TerrainType.Clear;
-            temp3.T[7] = TerrainType.Beach;
-            temp3.T[8] = TerrainType.Beach;
-            temp3.T[9] = TerrainType.Water;
-            temp3.T[10] = TerrainType.Water;
-            temp3.T[11] = TerrainType.River;
-            temp3.T[12] = TerrainType.Water;
-            temp3.T[13] = TerrainType.Water;
-            temp3.T[16] = TerrainType.Water;
-            TemplatesDict.Add(3, temp3);
-            Template temp4 = new Template();
-            temp4.Set_Type(TerrainType.Beach);
-            temp4.T[4] = TerrainType.Clear;
-            temp4.T[11] = TerrainType.Clear;
-            temp4.Set(16, TerrainType.Rough);
-            temp4.Set(17, TerrainType.Rough);
-            temp4.Set(18, TerrainType.River);
-            temp4.Set(20, TerrainType.Water);
-            temp4.Set(21, TerrainType.Water);
-            temp4.Set(22, TerrainType.Rock);
         }
     }
 
