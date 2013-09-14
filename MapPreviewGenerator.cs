@@ -18,10 +18,12 @@ namespace RedAlertMapPreviewGenerator
         WaypointStruct[] Waypoints = new WaypointStruct[8];
         static Bitmap[] SpawnLocationBitmaps = new Bitmap[8];
         int MapWidth = -1, MapHeight = -1, MapY = -1, MapX = -1;
-        Dictionary<int, Template> TemplatesDict = new Dictionary<int,Template>();
 
         static public void Load()
         {
+            if (IsLoaded == true) return;
+            IsLoaded = true;
+
             SpawnLocationBitmaps[0] = RedAlertMapPreviewGenerator.Properties.Resources._1;
             SpawnLocationBitmaps[1] = RedAlertMapPreviewGenerator.Properties.Resources._2;
             SpawnLocationBitmaps[2] = RedAlertMapPreviewGenerator.Properties.Resources._3;
@@ -311,6 +313,9 @@ namespace RedAlertMapPreviewGenerator
         TerrainType TerrainType_From_Template(int Template, int Tile)
         {
             if (Template == 65535) return TerrainType.Clear;
+
+//            Console.WriteLine("Template = {0}", Template);
+
             string Section = Template.ToString();
             string Key = Tile.ToString();
 
