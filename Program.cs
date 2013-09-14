@@ -18,10 +18,10 @@ namespace RedAlertMapPreviewGenerator
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
-	        Stopwatch stopwatch = new Stopwatch();
-	        stopwatch.Start();
-
             MapPreviewGenerator.Load();
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             var MapPreview = new MapPreviewGenerator("testmap.mpr");
 

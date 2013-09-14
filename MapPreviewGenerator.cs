@@ -12,6 +12,7 @@ namespace RedAlertMapPreviewGenerator
         static bool IsLoaded = false;
         IniFile MapINI;
         IniFile TemplatesINI;
+        static IniFile TemperateINI, SnowINI, DesertINI, InteriorINI, WinterINI;
         CellStruct[,] Cells = new CellStruct[128,128];
         Color Transparent = new Color();
         Color[] TerrainColors = new Color[20];
@@ -32,6 +33,12 @@ namespace RedAlertMapPreviewGenerator
             SpawnLocationBitmaps[5] = RedAlertMapPreviewGenerator.Properties.Resources._6;
             SpawnLocationBitmaps[6] = RedAlertMapPreviewGenerator.Properties.Resources._7;
             SpawnLocationBitmaps[7] = RedAlertMapPreviewGenerator.Properties.Resources._8;
+
+            TemperateINI = new IniFile("data/temperate.ini");
+            SnowINI = new IniFile("data/snow.ini");
+            DesertINI = new IniFile("data/desert.ini");
+            WinterINI = new IniFile("data/winter.ini");
+            InteriorINI = new IniFile("data/interior.ini");
         }
 
         public MapPreviewGenerator(string FileName)
@@ -43,8 +50,7 @@ namespace RedAlertMapPreviewGenerator
             MapX = MapINI.getIntValue("Map", "X", -1);
             MapY = MapINI.getIntValue("Map", "Y", -1);
 
-            string TheaterName = MapINI.getStringValue("Map", "Theater", "temperate");
-            TemplatesINI = new IniFile(TheaterName + ".ini");
+            Set_Templates_INI();
 
             Read_Terrain_Colors();
 
@@ -139,6 +145,22 @@ namespace RedAlertMapPreviewGenerator
                         Waypoints[WayPoint].Y = y;
                     }
                 }
+            }
+        }
+
+        void Set_Templates_INI()
+        {
+            string TheaterName = MapINI.getStringValue("Map", "Theater", "temperate");
+            TheaterName.ToUpper();
+
+            switch (TheaterName)
+            {
+                case "TEMPERATE": TemplatesINI = TemperateINI; break;
+                case "SNOW": TemplatesINI = SnowINI; break;
+                case "INTERIOR": TemplatesINI = InteriorINI; break;
+                case "DESERT": TemplatesINI = DesertINI; break;
+                case "WINTER": TemplatesINI = WinterINI; break;
+                default: TemplatesINI = TemperateINI; break;
             }
         }
 
@@ -455,28 +477,6 @@ namespace RedAlertMapPreviewGenerator
                 }
             }
         }
-
-        public static byte[] Encode(byte[] src)
-        {
-            /* quick & dirty format80 encoder -- only uses raw copy operator, terminated with a zero-run. */
-            /* this does not produce good compression, but it's valid format80 */
-
-            var ctx = new FastByteReader(src);
-            var ms = new MemoryStream();
-
-            do
-            {
-                var len = Math.Min(ctx.Remaining(), 0x3F);
-                ms.WriteByte((byte)(0x80 | len));
-                while (len-- > 0)
-                    ms.WriteByte(ctx.ReadByte());
-            }
-            while (!ctx.Done());
-
-            ms.WriteByte(0x80);	// terminator -- 0-length run.
-
-            return ms.ToArray();
-        }
     }
 
     struct CellStruct
@@ -508,28 +508,5 @@ namespace RedAlertMapPreviewGenerator
         Beach,
         Ore,
         Gems,
-    }
-    class Template
-    {
-        public TerrainType[] T = new TerrainType[40]; // T = Tiles
-
-        public void Set_Clear()
-        {
-            for (int i = 0; i < T.Length; i++)
-            {
-                T[i] = TerrainType.Clear;
-            }
-        }
-        public void Set_Type(TerrainType type)
-        {
-            for (int i = 0; i < T.Length; i++)
-            {
-                T[i] = type;
-            }
-        }
-        public void Set(int Index, TerrainType type)
-        {
-            T[Index] = type;
-        }
     }
 }
