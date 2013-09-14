@@ -14,30 +14,38 @@ namespace RedAlertMapPreviewGenerator
     {
         static void Main(string[] args)
         {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("ERROR: Argument count needs to be at least 2.");
+                Console.WriteLine("Usage: ProgramName InputFile OutputFile");
+                return;
+            }
             // Make sure the Parse() functions parse commas and periods correctly
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             MapPreviewGenerator.Load();
 
+
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var MapPreview = new MapPreviewGenerator("testmap.mpr");
+            var MapPreview = new MapPreviewGenerator(args[0]);
 
             Bitmap mapPreview = MapPreview.Get_Bitmap();
             Graphics g = Graphics.FromImage(mapPreview);
 
             Image img = resizeImage(mapPreview, new Size(256, 256));
-            img.Save("derp.png");
+            img.Save(args[1]);
 
 
-	        stopwatch.Stop();
+            stopwatch.Stop();
 
-	        Console.WriteLine("Time elapsed: {0}",
-	        stopwatch.ElapsedMilliseconds);
+            Console.WriteLine("");
+            Console.WriteLine("Created image '{0}' using map '{1}'.", args[1], args[0]);
+            Console.WriteLine("Time elapsed: {0} milliseconds.",
+            stopwatch.ElapsedMilliseconds);
 
-            Console.Read();
         }
 
         public static Image resizeImage(Image imgToResize, Size size)

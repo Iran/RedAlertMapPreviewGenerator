@@ -1,0 +1,7 @@
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\RedAlertMapPreviewGenerator.exe.config
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Release\RedAlertMapPreviewGenerator.Properties.Resources.resources
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Release\RedAlertMapPreviewGenerator.csproj.GenerateResource.Cache
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Release\RedAlertMapPreviewGenerator.exe
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Release\RedAlertMapPreviewGenerator.pdb
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\RedAlertMapPreviewGenerator.exe
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\RedAlertMapPreviewGenerator.pdb
