@@ -136,7 +136,7 @@ namespace RedAlertMapPreviewGenerator
                     Cells[y, x] = Raw[Index];
 
                     int WayPoint = Raw[Index].Waypoint-1;
-                    if (WayPoint >= 0 && WayPoint <= 8)
+                    if (WayPoint >= 0 && WayPoint < 8)
                     {
 //                        Console.WriteLine("Waypoint found! ID = {0}, Raw = {1}", WayPoint, Index);
 
