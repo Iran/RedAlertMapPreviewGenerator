@@ -46,7 +46,7 @@ namespace RedAlertMapPreviewGenerator
             MapINI = new IniFile(FileName);
 
             MapHeight = MapINI.getIntValue("Map", "Height", -1);
-            MapWidth = MapINI.getIntValue("Map", "Height", -1);
+            MapWidth = MapINI.getIntValue("Map", "Width", -1);
             MapX = MapINI.getIntValue("Map", "X", -1);
             MapY = MapINI.getIntValue("Map", "Y", -1);
 

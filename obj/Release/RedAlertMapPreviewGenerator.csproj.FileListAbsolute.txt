@@ -5,3 +5,4 @@ C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Release\RedAlertMapPrevi
 C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Release\RedAlertMapPreviewGenerator.pdb
 C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\RedAlertMapPreviewGenerator.exe
 C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\RedAlertMapPreviewGenerator.pdb
+C:\Users\Maikel\Desktop\RedAlertMapPreviewGenerator\obj\Release\RedAlertMapPreviewGenerator.csprojResolveAssemblyReference.cache
