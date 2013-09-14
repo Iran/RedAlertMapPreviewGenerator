@@ -9,11 +9,22 @@ namespace RedAlertMapPreviewGenerator
 {
     class MapPreviewGenerator
     {
+        static bool IsLoaded = false;
         IniFile MapINI;
+        IniFile TemplatesINI;
         CellStruct[,] Cells = new CellStruct[128,128];
         Color Transparent = new Color();
+        Color[] TerrainColors = new Color[20];
+        WaypointStruct[] Waypoints = new WaypointStruct[8];
+        static Bitmap[] SpawnLocationBitmaps = new Bitmap[8];
         int MapWidth = -1, MapHeight = -1, MapY = -1, MapX = -1;
         Dictionary<int, Template> TemplatesDict = new Dictionary<int,Template>();
+
+        static public void Load()
+        {
+//            SpwanLocationBitmaps[0] = RedAlertMapPreviewGenerator.Properties.Resources._1;
+            SpawnLocationBitmaps[1] = RedAlertMapPreviewGenerator.Properties.Resources._2;
+        }
 
         public MapPreviewGenerator(string FileName)
         {
@@ -23,6 +34,11 @@ namespace RedAlertMapPreviewGenerator
             MapWidth = MapINI.getIntValue("Map", "Height", -1);
             MapX = MapINI.getIntValue("Map", "X", -1);
             MapY = MapINI.getIntValue("Map", "Y", -1);
+
+            string TheaterName = MapINI.getStringValue("Map", "Theater", "temperate");
+            TemplatesINI = new IniFile(TheaterName + ".ini");
+
+            Read_Terrain_Colors();
 
             CellStruct[] Raw = new CellStruct[16384];
             MemoryStream ms = Get_Packed_Section("MapPack");
@@ -89,29 +105,59 @@ namespace RedAlertMapPreviewGenerator
                 int WayPoint = int.Parse(entry.Key);
                 int Cell = int.Parse(entry.Value);
 
-                Raw[Cell].Waypoint = WayPoint;
+                Raw[Cell].Waypoint = WayPoint + 1;
 
 //                Console.WriteLine("{0} = {1}", WayPoint, Cell);
             }
 
             var SectionTerrrain = MapINI.getSectionContent("Terrain");
 
-            foreach (KeyValuePair<string, string> entry in SectionTerrrain)
+            if (SectionTerrrain != null)
             {
-                int Cell = int.Parse(entry.Key);
-                string Terrain = entry.Value;
+                foreach (KeyValuePair<string, string> entry in SectionTerrrain)
+                {
+                    int Cell = int.Parse(entry.Key);
+                    string Terrain = entry.Value;
 
-                Raw[Cell].Terrain = Terrain;
+                    Raw[Cell].Terrain = Terrain;
 
-//                Console.WriteLine("{0} = {1}", Cell, Terrain);
+                    //                Console.WriteLine("{0} = {1}", Cell, Terrain);
+                }
             }
-
             for (int x = 0; x < 128; x++)
             {
                 for (int y = 0; y < 128; y++)
                 {
-                    Cells[y, x] = Raw[(x * 128) + y];
+                    int Index = (x * 128) + y;
+                    Cells[y, x] = Raw[Index];
+
+                    int WayPoint = Raw[Index].Waypoint-1;
+                    if (WayPoint >= 0 && WayPoint <= 8)
+                    {
+                        Console.WriteLine("Waypoint found! ID = {0}, Raw = {1}", WayPoint, Index);
+                        Waypoints[WayPoint].WasFound = true;
+                        Waypoints[WayPoint].X = x;
+                        Waypoints[WayPoint].Y = y;
+                    }
                 }
+            }
+        }
+
+        void Read_Terrain_Colors()
+        {
+            var SectionKeyValues = TemplatesINI.getSectionContent("Terrain");
+
+            foreach (KeyValuePair<string, string> entry in SectionKeyValues)
+            {
+                string ColorString = TemplatesINI.getStringValue(entry.Value, "Color", "0, 0, 0");
+
+                string[] RGB = ColorString.Split(',');
+                int Red = int.Parse(RGB[0]);
+                int Green = int.Parse(RGB[1]);
+                int Blue = int.Parse(RGB[2]);
+
+ //               Console.WriteLine("{0}, {1}, {2}", Red, Green, Blue);
+                TerrainColors[(int)Get_TerrainType_From_Name(entry.Value)] = Color.FromArgb(Red, Green, Blue);
             }
         }
 
@@ -128,22 +174,11 @@ namespace RedAlertMapPreviewGenerator
 
         Color Color_From_TerrainType(TerrainType type)
         {
-            switch (type)
+            if ((int)type < TerrainColors.Length)
             {
-                case TerrainType.Clear: return Color.FromArgb(40, 68, 40);
-                case TerrainType.Water: return Color.FromArgb(92, 116, 164);
-                case TerrainType.Road: return Color.FromArgb(88, 116, 116);
-                case TerrainType.Rock: return Color.FromArgb(68, 68, 60);
-                case TerrainType.Tree: return Color.FromArgb(28, 32, 36);
-                case TerrainType.River: return Color.FromArgb(92, 140, 180);
-                case TerrainType.Rough: return Color.FromArgb(68, 68, 60);
-                case TerrainType.Wall: return Color.FromArgb(208, 192, 160);
-                case TerrainType.Beach: return Color.FromArgb(176, 156, 120);
-                case TerrainType.Ore: return Color.FromArgb(200, 200, 0);
-                case TerrainType.Gems: return Color.FromArgb(200, 0, 200);
-
-                default: return Transparent;
+                return TerrainColors[(int)type];
             }
+            return Transparent;
         }
 
         public Bitmap Get_Bitmap()
@@ -157,12 +192,14 @@ namespace RedAlertMapPreviewGenerator
                 for (int x = 0; x < 128; x++)
                 {
                     Color color = new Color();
-                    color = Color.Green;
+                    color = Color.Transparent;
 
                     CellStruct data = Cells[x, y];
 //                    int terrain = 0;
 
-                    color = Color_From_TerrainType(TerrainType_From_Template(data.Template, data.Tile));
+                    TerrainType terrainType = TerrainType_From_Template(data.Template, data.Tile);
+
+                    color = Color_From_TerrainType(terrainType);
 
                     if (data.Terrain != null)
                     {
@@ -171,7 +208,7 @@ namespace RedAlertMapPreviewGenerator
                     }          
                         else if (data.Waypoint != 0 && data.Waypoint < 10)
                         {
-//                            Console.WriteLine("Map[{0},{1}] waypoint = {2} = {3}", x, y, data.Waypoint, (y * 128) + x);
+                            Console.WriteLine("Map[{0},{1}] waypoint = {2} = {3}", x, y, data.Waypoint, (y * 128) + x);
                             color = Color.Red;
                         }
                         else if (data.Overlay != 255)
@@ -219,8 +256,36 @@ namespace RedAlertMapPreviewGenerator
                     }
                 }
 
+            Graphics g = Graphics.FromImage(bitMap);
+
+            Draw_Spawn_Locations(ref g);
+            g.Flush();
 
             return bitMap;
+        }
+
+        void Draw_Spawn_Locations(ref Graphics g)
+        {
+            for (int i = 1; i < 8; i++)
+            {
+                Draw_Spawn_Location(ref g, i);
+            }
+        }
+
+        void Draw_Spawn_Location(ref Graphics g, int SpawnNumber)
+        {
+            WaypointStruct Waypoint = Waypoints[SpawnNumber - 1];
+            if (Waypoint.WasFound == false) return;
+            if (SpawnLocationBitmaps[SpawnNumber - 1] == null) return;
+
+//            Console.WriteLine("draw spawn: X = {0}, Y = {1}", Waypoint.X, Waypoint.Y);
+
+            var Spawn = SpawnLocationBitmaps[SpawnNumber - 1];
+            int SpawnX = Spawn.Height / 2;
+            int SpawnY = Spawn.Width / 2;
+            g.DrawImage(Spawn, Waypoint.Y - SpawnX , Waypoint.X  - SpawnY, Spawn.Width, Spawn.Height);
+
+            g.Flush();
         }
 
         MemoryStream Get_Packed_Section(string SectionName)
@@ -270,38 +335,32 @@ namespace RedAlertMapPreviewGenerator
 
         TerrainType TerrainType_From_Template(int Template, int Tile)
         {
-            TerrainType terrainType = TerrainType.Clear;
+            if (Template == 65535) return TerrainType.Clear;
+            string Section = Template.ToString();
+            string Key = Tile.ToString();
 
-            if (TemplatesDict.ContainsKey(Template))
+            string Terrain = TemplatesINI.getStringValue(Section, Key, "Clear");
+
+            return Get_TerrainType_From_Name(Terrain);
+        }
+
+        TerrainType Get_TerrainType_From_Name(string Name)
+        {
+            switch (Name)
             {
-                Template temp;
-                TemplatesDict.TryGetValue(Template, out temp);
-                return temp.T[Tile];
+                case "Rough": return TerrainType.Rough;
+                case "Clear": return TerrainType.Clear;
+                case "Water": return TerrainType.Water;
+                case "Road": return TerrainType.Road;
+                case "Rock": return TerrainType.Rock;
+                case "Tree": return TerrainType.Tree;
+                case "River": return TerrainType.River;
+                case "Wall": return TerrainType.Wall;
+                case "Beach": return TerrainType.Beach;
+                case "Ore": return TerrainType.Ore;
+                case "Gems": return TerrainType.Gems;
+                default: return TerrainType.Clear;
             }
-/*
-            if (Template > 2 && Template < 57) return TerrainType.Beach;
-            if (Template > 134 && Template < 173) return TerrainType.Rock;
-            if (Template > 56 && Template < 97) return TerrainType.Rock;
-            if (Template > 172 && Template < 229) return TerrainType.Road;
-            if (Template > 230 && Template < 235) return TerrainType.Rock;
-            if (Template > 111 && Template < 125) return TerrainType.River;
-
-            switch (Template)
-            {
-                case 65535: case 255: return TerrainType.Clear;
-
-                case 1: case 2: return TerrainType.Water;
-
-                case 57: case 58: return TerrainType.Rock;
-
-                case 229: case 230: return TerrainType.River;
-
-                case 235: return TerrainType.Road;
-
-
-            } */
-
-            return terrainType;
         }
 
         void Init_Templates()
@@ -477,6 +536,14 @@ namespace RedAlertMapPreviewGenerator
         public string Terrain;
         public int Waypoint;
     }
+
+    struct WaypointStruct
+    {
+        public bool WasFound;
+        public int X;
+        public int Y;
+    }
+
     enum TerrainType
     {
         Clear = 0,
