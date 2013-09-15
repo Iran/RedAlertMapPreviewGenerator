@@ -14,10 +14,10 @@ namespace RedAlertMapPreviewGenerator
     {
         static void Main(string[] args)
         {
-            if (args.Length < 2)
+            if (args.Length < 3)
             {
-                Console.WriteLine("ERROR: Argument count needs to be at least 2.");
-                Console.WriteLine("Usage: ProgramName InputFile OutputFile");
+                Console.WriteLine("ERROR: Argument count needs to be at least 3.");
+                Console.WriteLine("Usage: ProgramName InputFile OutputFile ScaleFactor");
                 return;
             }
             // Make sure the Parse() functions parse commas and periods correctly
@@ -32,11 +32,8 @@ namespace RedAlertMapPreviewGenerator
 
             var MapPreview = new MapPreviewGenerator(args[0]);
 
-            Bitmap mapPreview = MapPreview.Get_Bitmap();
-            Graphics g = Graphics.FromImage(mapPreview);
-
-            Image img = resizeImage(mapPreview, new Size(256, 256));
-            img.Save(args[1]);
+            int ScaleFactor = int.Parse(args[2]);
+            MapPreview.Get_Bitmap(ScaleFactor).Save(args[1]);
 
 
             stopwatch.Stop();

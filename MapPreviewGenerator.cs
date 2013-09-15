@@ -202,7 +202,7 @@ namespace RedAlertMapPreviewGenerator
             return Transparent;
         }
 
-        public Bitmap Get_Bitmap()
+        public Bitmap Get_Bitmap(int _ScaleFactor)
         {
             Bitmap bitMap = new Bitmap(128, 128);
             bitMap.MakeTransparent(Transparent);
@@ -223,7 +223,7 @@ namespace RedAlertMapPreviewGenerator
                     if (data.Terrain != null)
                     {
                         color = Color_From_TerrainType(TerrainType.Tree);
-                    }          
+                    }
 
                     else if (data.Overlay != 255)
                     {
@@ -255,34 +255,43 @@ namespace RedAlertMapPreviewGenerator
                 }
             }
 
-            Graphics g = Graphics.FromImage(bitMap);
+            var _Bitmap = new Bitmap(bitMap.Width * _ScaleFactor, bitMap.Height * _ScaleFactor);
+            using (var _Graphics = Graphics.FromImage(_Bitmap))
+            {
+                _Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                _Graphics.DrawImage(bitMap, 0, 0, _Bitmap.Width, _Bitmap.Height);
+            }
 
-            Draw_Spawn_Locations(ref g);
+            Graphics g = Graphics.FromImage(_Bitmap);
+
+            Draw_Spawn_Locations(ref g, _ScaleFactor);
             g.Flush();
 
-            return bitMap;
+            return _Bitmap;
         }
 
-        void Draw_Spawn_Locations(ref Graphics g)
+
+        void Draw_Spawn_Locations(ref Graphics g, int _ScaleFactor)
         {
             for (int i = 1; i < 9; i++)
             {
-                Draw_Spawn_Location(ref g, i);
+                Draw_Spawn_Location(ref g, i, _ScaleFactor);
             }
         }
 
-        void Draw_Spawn_Location(ref Graphics g, int SpawnNumber)
+
+        void Draw_Spawn_Location(ref Graphics g, int SpawnNumber, int _ScaleFactor)
         {
             WaypointStruct Waypoint = Waypoints[SpawnNumber - 1];
             if (Waypoint.WasFound == false) return;
             if (SpawnLocationBitmaps[SpawnNumber - 1] == null) return;
 
-//            Console.WriteLine("draw spawn: X = {0}, Y = {1}", Waypoint.X, Waypoint.Y);
+            // Console.WriteLine("draw spawn: X = {0}, Y = {1}", Waypoint.X, Waypoint.Y);
 
             var Spawn = SpawnLocationBitmaps[SpawnNumber - 1];
-            int SpawnX = Spawn.Height / 2;
-            int SpawnY = Spawn.Width / 2;
-            g.DrawImage(Spawn, Waypoint.Y - SpawnY , Waypoint.X  - SpawnX, Spawn.Width, Spawn.Height);
+            int SpawnX = Spawn.Height / (2 * _ScaleFactor);
+            int SpawnY = Spawn.Width / (2 * _ScaleFactor);
+            g.DrawImage(Spawn, (Waypoint.Y - SpawnY) * _ScaleFactor, (Waypoint.X - SpawnX) * _ScaleFactor, Spawn.Width, Spawn.Height);
 
             g.Flush();
         }
