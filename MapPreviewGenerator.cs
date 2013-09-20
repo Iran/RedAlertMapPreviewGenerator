@@ -104,14 +104,17 @@ namespace RedAlertMapPreviewGenerator
 
             var SectionKeyValues = MapINI.getSectionContent("Waypoints");
 
-            foreach (KeyValuePair<string, string> entry in SectionKeyValues)
+            if (SectionKeyValues != null)
             {
-                int WayPoint = int.Parse(entry.Key);
-                int Cell = int.Parse(entry.Value);
+                foreach (KeyValuePair<string, string> entry in SectionKeyValues)
+                {
+                    int WayPoint = int.Parse(entry.Key);
+                    int Cell = int.Parse(entry.Value);
 
-                Raw[Cell].Waypoint = WayPoint + 1;
+                    Raw[Cell].Waypoint = WayPoint + 1;
 
-//                Console.WriteLine("{0} = {1}", WayPoint, Cell);
+                    //                Console.WriteLine("{0} = {1}", WayPoint, Cell);
+                }
             }
 
             var SectionTerrrain = MapINI.getSectionContent("Terrain");
